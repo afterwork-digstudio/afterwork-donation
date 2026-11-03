@@ -1,7 +1,7 @@
 "use strict";
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import WebhookSimulatorModal from "@/components/WebhookSimulatorModal";
@@ -27,7 +27,20 @@ export default function OverviewPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [donations, setDonations] = useState<DonationItem[]>(initialDonations);
+  const [universes, setUniverses] = useState(initialUniverses);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("aw_universes");
+    if (saved !== null) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setUniverses(parsed);
+        }
+      } catch {}
+    }
+  }, []);
 
   const totalRevenue = donations.reduce((sum, d) => sum + d.amount, 0);
   const totalCash = donations.reduce((sum, d) => sum + d.cashReward, 0);
@@ -219,35 +232,41 @@ export default function OverviewPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {initialUniverses.map((uni, index) => (
-                    <div
-                      key={uni.id}
-                      className="flex items-center justify-between rounded-xl border border-border/80 bg-slate-50/50 dark:bg-zinc-900/40 p-3 hover:bg-slate-100/70 dark:hover:bg-zinc-800/60 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/80 font-bold text-xs text-indigo-700 dark:text-indigo-300">
-                          #{index + 1}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-bold text-foreground">
-                            {uni.name}
-                          </p>
-                          <p className="truncate text-[10px] text-muted-foreground font-mono">
-                            Universe {uni.id}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block">
-                          Revenue
-                        </span>
-                        <span className="text-xs font-bold text-foreground">
-                          Rp {uni.totalRevenue.toLocaleString("id-ID")}
-                        </span>
-                      </div>
+                  {universes.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-muted-foreground">
+                      Belum ada universe terdaftar. Kelola di halaman Workspaces.
                     </div>
-                  ))}
+                  ) : (
+                    universes.map((uni, index) => (
+                      <div
+                        key={uni.id}
+                        className="flex items-center justify-between rounded-xl border border-border/80 bg-slate-50/50 dark:bg-zinc-900/40 p-3 hover:bg-slate-100/70 dark:hover:bg-zinc-800/60 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/80 font-bold text-xs text-indigo-700 dark:text-indigo-300">
+                            #{index + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold text-foreground">
+                              {uni.name}
+                            </p>
+                            <p className="truncate text-[10px] text-muted-foreground font-mono">
+                              Universe {uni.id}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block">
+                            Revenue
+                          </span>
+                          <span className="text-xs font-bold text-foreground">
+                            Rp {uni.totalRevenue.toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

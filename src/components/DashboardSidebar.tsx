@@ -58,10 +58,10 @@ export default function DashboardSidebar({
 
   React.useEffect(() => {
     const saved = localStorage.getItem("aw_universes");
-    if (saved) {
+    if (saved !== null) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setWorkspacesList(
             parsed.map((u: { id: string; name: string }) => ({
               id: u.id,
@@ -145,31 +145,44 @@ export default function DashboardSidebar({
 
             {workspaceMenuOpen && (
               <div className="absolute top-full left-0 right-0 z-20 mt-1.5 rounded-xl border border-border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95">
-                {workspacesList.map((ws) => (
-                  <button
-                    key={ws.id}
-                    type="button"
-                    onClick={() => {
-                      onWorkspaceChange(ws.id);
-                      setWorkspaceMenuOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs text-left font-medium transition-colors ${
-                      ws.id === selectedWs.id
-                        ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 font-semibold"
-                        : "hover:bg-muted text-foreground"
-                    }`}
-                  >
-                    <div className="truncate">
-                      <p className="truncate">{ws.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
-                        Universe ID: {ws.universeId}
-                      </p>
-                    </div>
-                    {ws.id === selectedWs.id && (
-                      <Check className="size-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 ml-2" />
-                    )}
-                  </button>
-                ))}
+                {workspacesList.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground">Belum ada workspace</p>
+                    <Link
+                      href="/dashboard/workspaces"
+                      onClick={() => setWorkspaceMenuOpen(false)}
+                      className="mt-1.5 inline-block text-[11px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                    >
+                      + Tambah Sekarang
+                    </Link>
+                  </div>
+                ) : (
+                  workspacesList.map((ws) => (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => {
+                        onWorkspaceChange(ws.id);
+                        setWorkspaceMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs text-left font-medium transition-colors ${
+                        ws.id === selectedWs.id
+                          ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 font-semibold"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <div className="truncate">
+                        <p className="truncate">{ws.name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                          Universe ID: {ws.universeId}
+                        </p>
+                      </div>
+                      {ws.id === selectedWs.id && (
+                        <Check className="size-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 ml-2" />
+                      )}
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>

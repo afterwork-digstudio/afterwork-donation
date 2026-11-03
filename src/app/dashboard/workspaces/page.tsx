@@ -31,12 +31,16 @@ export default function WorkspacesPage() {
   // Load from localStorage if exists
   useEffect(() => {
     const saved = localStorage.getItem("aw_universes");
-    if (saved) {
+    if (saved !== null) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setUniverses(parsed);
-          setCurrentWorkspace(prev => parsed.some((u: Universe) => u.id === prev) ? prev : parsed[0].id);
+          setCurrentWorkspace((prev) =>
+            parsed.some((u: Universe) => u.id === prev)
+              ? prev
+              : (parsed[0]?.id || "")
+          );
         }
       } catch {}
     }

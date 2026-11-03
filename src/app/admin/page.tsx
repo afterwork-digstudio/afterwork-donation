@@ -173,7 +173,7 @@ export default function AdminPage() {
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [newStaffName, setNewStaffName] = useState("");
   const [newStaffEmail, setNewStaffEmail] = useState("");
-  const [newStaffRole, setNewStaffRole] = useState<"ADMIN" | "MODERATOR">("MODERATOR");
+  const [newStaffRole, setNewStaffRole] = useState<"OWNER" | "ADMIN" | "MODERATOR">("ADMIN");
 
   // Edit & Delete Staff Candidate
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
@@ -205,17 +205,17 @@ export default function AdminPage() {
   // Load staff and blacklist from localStorage
   useEffect(() => {
     const savedStaff = localStorage.getItem("aw_staff_list");
-    if (savedStaff) {
+    if (savedStaff !== null) {
       try {
         const parsed = JSON.parse(savedStaff);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setStaffList(parsed);
         }
       } catch {}
     }
 
     const savedBl = localStorage.getItem("aw_blacklist");
-    if (savedBl) {
+    if (savedBl !== null) {
       try {
         const parsed = JSON.parse(savedBl);
         if (Array.isArray(parsed)) {
@@ -306,11 +306,6 @@ export default function AdminPage() {
 
   const confirmDeleteStaff = () => {
     if (!deleteStaffCandidate) return;
-    if (deleteStaffCandidate.role === "OWNER") {
-      showToast("Akun Owner tidak dapat dihapus. Anda dapat mengedit nama dan emailnya.");
-      setDeleteStaffCandidate(null);
-      return;
-    }
     const updated = staffList.filter((s) => s.id !== deleteStaffCandidate.id);
     setStaffList(updated);
     localStorage.setItem("aw_staff_list", JSON.stringify(updated));
@@ -644,59 +639,71 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {staffList.map((staff) => (
-                    <tr key={staff.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-900/40 transition-colors">
-                      <td className="px-4 py-3.5 font-semibold text-foreground flex items-center gap-3">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/70 font-bold text-xs text-indigo-700 dark:text-indigo-300">
-                          {staff.avatar}
+                  {staffList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Users className="size-8 text-muted-foreground/40" />
+                          <p className="text-sm font-semibold text-foreground">Belum ada akun staff atau admin</p>
+                          <p className="text-xs text-muted-foreground max-w-sm">
+                            Semua akun staff telah dihapus. Klik tombol &quot;Tambah Akun Staff&quot; di atas untuk membuat akun Owner/Admin baru.
+                          </p>
                         </div>
-                        <span>{staff.name}</span>
                       </td>
-                      <td className="px-4 py-3.5 font-mono text-muted-foreground">{staff.email}</td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
-                            staff.role === "OWNER"
-                              ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40"
-                              : staff.role === "ADMIN"
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-800/40"
-                              : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
-                          }`}
-                        >
-                          {staff.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
-                            staff.status === "ACTIVE"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400"
-                              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400"
-                          }`}
-                        >
+                    </tr>
+                  ) : (
+                    staffList.map((staff) => (
+                      <tr key={staff.id} className="hover:bg-slate-50/60 dark:hover:bg-zinc-900/40 transition-colors">
+                        <td className="px-4 py-3.5 font-semibold text-foreground flex items-center gap-3">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/70 font-bold text-xs text-indigo-700 dark:text-indigo-300">
+                            {staff.avatar}
+                          </div>
+                          <span>{staff.name}</span>
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-muted-foreground">{staff.email}</td>
+                        <td className="px-4 py-3.5">
                           <span
-                            className={`size-1.5 rounded-full ${
-                              staff.status === "ACTIVE" ? "bg-emerald-500" : "bg-amber-500"
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                              staff.role === "OWNER"
+                                ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40"
+                                : staff.role === "ADMIN"
+                                ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-800/40"
+                                : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
                             }`}
-                          />
-                          {staff.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-muted-foreground">{staff.lastLogin}</td>
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Edit button */}
-                          <button
-                            type="button"
-                            onClick={() => setEditingStaff(staff)}
-                            className="p-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs"
-                            title="Edit Akun"
                           >
-                            <Edit className="size-3.5" />
-                          </button>
+                            {staff.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                              staff.status === "ACTIVE"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400"
+                            }`}
+                          >
+                            <span
+                              className={`size-1.5 rounded-full ${
+                                staff.status === "ACTIVE" ? "bg-emerald-500" : "bg-amber-500"
+                              }`}
+                            />
+                            {staff.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-muted-foreground">{staff.lastLogin}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Edit button */}
+                            <button
+                              type="button"
+                              onClick={() => setEditingStaff(staff)}
+                              className="p-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs"
+                              title="Edit Akun"
+                            >
+                              <Edit className="size-3.5" />
+                            </button>
 
-                          {staff.role !== "OWNER" ? (
-                            <>
+                            {staff.role !== "OWNER" && (
                               <button
                                 type="button"
                                 onClick={() => handleToggleStaffStatus(staff.id)}
@@ -714,24 +721,22 @@ export default function AdminPage() {
                                   </>
                                 )}
                               </button>
+                            )}
 
-                              {/* Delete button */}
-                              <button
-                                type="button"
-                                onClick={() => setDeleteStaffCandidate(staff)}
-                                className="p-1 rounded-lg border border-border text-muted-foreground hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs"
-                                title="Hapus Akun Staff"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground font-semibold px-1.5">Owner</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {/* Delete button (available for all staff) */}
+                            <button
+                              type="button"
+                              onClick={() => setDeleteStaffCandidate(staff)}
+                              className="p-1 rounded-lg border border-border text-muted-foreground hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs"
+                              title="Hapus Akun Staff"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1238,11 +1243,12 @@ export default function AdminPage() {
                 <label className="font-semibold block text-foreground">Role Otorisasi</label>
                 <select
                   value={newStaffRole}
-                  onChange={(e) => setNewStaffRole(e.target.value as "ADMIN" | "MODERATOR")}
+                  onChange={(e) => setNewStaffRole(e.target.value as "OWNER" | "ADMIN" | "MODERATOR")}
                   className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs cursor-pointer"
                 >
-                  <option value="MODERATOR">Moderator (Lihat data &amp; kredit manual)</option>
+                  <option value="OWNER">Owner (Akses Superadmin &amp; Master Token)</option>
                   <option value="ADMIN">Admin (Akses penuh kecuali master token)</option>
+                  <option value="MODERATOR">Moderator (Lihat data &amp; kredit manual)</option>
                 </select>
               </div>
 
@@ -1307,24 +1313,23 @@ export default function AdminPage() {
                 />
               </div>
 
-              {editingStaff.role !== "OWNER" && (
-                <div className="space-y-1">
-                  <label className="font-semibold block text-foreground">Role</label>
-                  <select
-                    value={editingStaff.role}
-                    onChange={(e) =>
-                      setEditingStaff({
-                        ...editingStaff,
-                        role: e.target.value as "ADMIN" | "MODERATOR",
-                      })
-                    }
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs cursor-pointer"
-                  >
-                    <option value="MODERATOR">Moderator</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
-                </div>
-              )}
+              <div className="space-y-1">
+                <label className="font-semibold block text-foreground">Role</label>
+                <select
+                  value={editingStaff.role}
+                  onChange={(e) =>
+                    setEditingStaff({
+                      ...editingStaff,
+                      role: e.target.value as "OWNER" | "ADMIN" | "MODERATOR",
+                    })
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs cursor-pointer"
+                >
+                  <option value="OWNER">Owner (Superadmin)</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="MODERATOR">Moderator</option>
+                </select>
+              </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
