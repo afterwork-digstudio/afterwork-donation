@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export async function GET() {
+  return NextResponse.json({
+    status: "active",
+    provider: "BagiBagi",
+    message: "BagiBagi Webhook Endpoint is ready and listening for POST events.",
+    documentation: "https://bagibagi.id",
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

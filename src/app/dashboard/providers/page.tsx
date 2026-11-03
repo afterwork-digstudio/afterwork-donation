@@ -1,7 +1,7 @@
 "use strict";
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import ProviderCard, { ProviderData } from "@/components/ProviderCard";
@@ -157,13 +157,46 @@ export default function ProvidersPage() {
     }, 3500);
   };
 
+  // Load from localStorage and normalize URL origin
+  useEffect(() => {
+    const origin =
+      typeof window !== "undefined" && window.location.origin
+        ? window.location.origin
+        : "https://afterwork-donation.vercel.app";
+
+    const saved = localStorage.getItem("aw_providers");
+    if (saved !== null) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = parsed.map((p: ProviderData) => ({
+            ...p,
+            webhookUrl: p.webhookUrl.replace(/^http:\/\/localhost:\d+/, origin),
+          }));
+          setProviders(normalized);
+          return;
+        }
+      } catch {}
+    }
+
+    // Default: normalize initialProviders with actual domain
+    setProviders((prev) =>
+      prev.map((p) => ({
+        ...p,
+        webhookUrl: p.webhookUrl.replace(/^http:\/\/localhost:\d+/, origin),
+      }))
+    );
+  }, []);
+
   const handleUpdateProvider = (
     id: string,
     updated: Partial<ProviderData>
   ) => {
-    setProviders((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updated } : p))
-    );
+    setProviders((prev) => {
+      const next = prev.map((p) => (p.id === id ? { ...p, ...updated } : p));
+      localStorage.setItem("aw_providers", JSON.stringify(next));
+      return next;
+    });
   };
 
   const handleLogEvent = (msg: string) => {

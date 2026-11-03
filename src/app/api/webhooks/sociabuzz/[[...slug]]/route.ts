@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export async function GET() {
+  return new NextResponse("OK - SociaBuzz Webhook Endpoint Ready", {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
