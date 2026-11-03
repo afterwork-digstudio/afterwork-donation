@@ -1,7 +1,7 @@
 "use strict";
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldAlert,
@@ -21,6 +21,7 @@ import {
   Download,
   Terminal,
   Trash2,
+  Edit,
   Cpu,
   HardDrive,
   Radio,
@@ -174,6 +175,10 @@ export default function AdminPage() {
   const [newStaffEmail, setNewStaffEmail] = useState("");
   const [newStaffRole, setNewStaffRole] = useState<"ADMIN" | "MODERATOR">("MODERATOR");
 
+  // Edit & Delete Staff Candidate
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [deleteStaffCandidate, setDeleteStaffCandidate] = useState<StaffMember | null>(null);
+
   // Clawback State
   const [clawbackTxId, setClawbackTxId] = useState("");
   const [clawbackReason, setClawbackReason] = useState("");
@@ -197,6 +202,29 @@ export default function AdminPage() {
   // Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Load staff and blacklist from localStorage
+  useEffect(() => {
+    const savedStaff = localStorage.getItem("aw_staff_list");
+    if (savedStaff) {
+      try {
+        const parsed = JSON.parse(savedStaff);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setStaffList(parsed);
+        }
+      } catch {}
+    }
+
+    const savedBl = localStorage.getItem("aw_blacklist");
+    if (savedBl) {
+      try {
+        const parsed = JSON.parse(savedBl);
+        if (Array.isArray(parsed)) {
+          setBlacklist(parsed);
+        }
+      } catch {}
+    }
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -215,7 +243,9 @@ export default function AdminPage() {
       addedAt: new Date().toISOString().substring(0, 16).replace("T", " "),
     };
 
-    setBlacklist([entry, ...blacklist]);
+    const updated = [entry, ...blacklist];
+    setBlacklist(updated);
+    localStorage.setItem("aw_blacklist", JSON.stringify(updated));
     setShowAddBlModal(false);
     setNewBlUsername("");
     setNewBlUserId("");
@@ -224,7 +254,9 @@ export default function AdminPage() {
   };
 
   const handleRemoveBlacklist = (id: string, name: string) => {
-    setBlacklist(blacklist.filter((b) => b.id !== id));
+    const updated = blacklist.filter((b) => b.id !== id);
+    setBlacklist(updated);
+    localStorage.setItem("aw_blacklist", JSON.stringify(updated));
     showToast(`User @${name} dihapus dari daftar blacklist.`);
   };
 
@@ -249,7 +281,10 @@ export default function AdminPage() {
       avatar: initials,
     };
 
-    setStaffList([...staffList, newMember]);
+    const updated = [...staffList, newMember];
+    setStaffList(updated);
+    localStorage.setItem("aw_staff_list", JSON.stringify(updated));
+
     setShowAddStaffModal(false);
     setNewStaffName("");
     setNewStaffEmail("");
@@ -257,16 +292,52 @@ export default function AdminPage() {
   };
 
   const handleToggleStaffStatus = (id: string) => {
-    setStaffList((prev) =>
-      prev.map((s) => {
-        if (s.id === id && s.role !== "OWNER") {
-          const next = s.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-          showToast(`Status ${s.name} diubah menjadi ${next}.`);
-          return { ...s, status: next };
-        }
-        return s;
-      })
+    const updated: StaffMember[] = staffList.map((s) => {
+      if (s.id === id && s.role !== "OWNER") {
+        const next: "ACTIVE" | "SUSPENDED" = s.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+        showToast(`Status ${s.name} diubah menjadi ${next}.`);
+        return { ...s, status: next };
+      }
+      return s;
+    });
+    setStaffList(updated);
+    localStorage.setItem("aw_staff_list", JSON.stringify(updated));
+  };
+
+  const confirmDeleteStaff = () => {
+    if (!deleteStaffCandidate) return;
+    if (deleteStaffCandidate.role === "OWNER") {
+      showToast("Akun Owner tidak dapat dihapus. Anda dapat mengedit nama dan emailnya.");
+      setDeleteStaffCandidate(null);
+      return;
+    }
+    const updated = staffList.filter((s) => s.id !== deleteStaffCandidate.id);
+    setStaffList(updated);
+    localStorage.setItem("aw_staff_list", JSON.stringify(updated));
+    showToast(`Akun staff ${deleteStaffCandidate.name} berhasil dihapus.`);
+    setDeleteStaffCandidate(null);
+  };
+
+  const handleSaveEditStaff = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStaff) return;
+
+    const initials = editingStaff.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+
+    const updated = staffList.map((s) =>
+      s.id === editingStaff.id
+        ? { ...editingStaff, avatar: initials }
+        : s
     );
+    setStaffList(updated);
+    localStorage.setItem("aw_staff_list", JSON.stringify(updated));
+    showToast(`Informasi akun ${editingStaff.name} berhasil diperbarui.`);
+    setEditingStaff(null);
   };
 
   const handleExecuteClawback = async (e: React.FormEvent) => {
@@ -613,27 +684,51 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3.5 text-muted-foreground">{staff.lastLogin}</td>
                       <td className="px-4 py-3.5 text-right">
-                        {staff.role !== "OWNER" ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Edit button */}
                           <button
                             type="button"
-                            onClick={() => handleToggleStaffStatus(staff.id)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs"
+                            onClick={() => setEditingStaff(staff)}
+                            className="p-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs"
+                            title="Edit Akun"
                           >
-                            {staff.status === "ACTIVE" ? (
-                              <>
-                                <Lock className="size-3 text-amber-500" />
-                                <span>Suspend</span>
-                              </>
-                            ) : (
-                              <>
-                                <Unlock className="size-3 text-emerald-500" />
-                                <span>Aktifkan</span>
-                              </>
-                            )}
+                            <Edit className="size-3.5" />
                           </button>
-                        ) : (
-                          <span className="text-[11px] text-muted-foreground font-mono">Protected</span>
-                        )}
+
+                          {staff.role !== "OWNER" ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStaffStatus(staff.id)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-xs"
+                              >
+                                {staff.status === "ACTIVE" ? (
+                                  <>
+                                    <Lock className="size-3 text-amber-500" />
+                                    <span>Suspend</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Unlock className="size-3 text-emerald-500" />
+                                    <span>Aktifkan</span>
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Delete button */}
+                              <button
+                                type="button"
+                                onClick={() => setDeleteStaffCandidate(staff)}
+                                className="p-1 rounded-lg border border-border text-muted-foreground hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs"
+                                title="Hapus Akun Staff"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-semibold px-1.5">Owner</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1167,6 +1262,124 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Staff / Owner */}
+      {editingStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Edit className="size-4 text-indigo-500" />
+                <h4 className="text-sm font-bold text-foreground">Edit Profil Staff: {editingStaff.name}</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStaff(null)}
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditStaff} className="space-y-3.5 text-xs">
+              <div className="space-y-1">
+                <label className="font-semibold block text-foreground">Nama</label>
+                <input
+                  type="text"
+                  required
+                  value={editingStaff.name}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold block text-foreground">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={editingStaff.email}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, email: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-mono"
+                />
+              </div>
+
+              {editingStaff.role !== "OWNER" && (
+                <div className="space-y-1">
+                  <label className="font-semibold block text-foreground">Role</label>
+                  <select
+                    value={editingStaff.role}
+                    onChange={(e) =>
+                      setEditingStaff({
+                        ...editingStaff,
+                        role: e.target.value as "ADMIN" | "MODERATOR",
+                      })
+                    }
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs cursor-pointer"
+                  >
+                    <option value="MODERATOR">Moderator</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setEditingStaff(null)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Delete Staff Confirmation */}
+      {deleteStaffCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-foreground shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="size-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-foreground">Hapus Akun Staff?</h4>
+                <p className="text-xs text-muted-foreground">{deleteStaffCandidate.name}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Apakah Anda yakin ingin menghapus akun staff <b>{deleteStaffCandidate.name}</b> ({deleteStaffCandidate.email})? Anggota ini tidak akan bisa login lagi ke Admin Console.
+            </p>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteStaffCandidate(null)}
+                className="rounded-lg border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-slate-100 dark:hover:bg-zinc-800"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteStaff}
+                className="rounded-lg bg-rose-600 hover:bg-rose-700 px-4 py-1.5 text-xs font-semibold text-white shadow-sm"
+              >
+                Hapus Staff
+              </button>
+            </div>
           </div>
         </div>
       )}

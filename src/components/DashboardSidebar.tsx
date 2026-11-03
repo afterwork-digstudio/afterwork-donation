@@ -54,9 +54,32 @@ export default function DashboardSidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = React.useState(false);
+  const [workspacesList, setWorkspacesList] = React.useState(workspaces);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem("aw_universes");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setWorkspacesList(
+            parsed.map((u: { id: string; name: string }) => ({
+              id: u.id,
+              name: u.name,
+              universeId: u.id,
+            }))
+          );
+        }
+      } catch {}
+    }
+  }, []);
 
   const selectedWs =
-    workspaces.find((w) => w.id === currentWorkspace) || workspaces[0];
+    workspacesList.find((w) => w.id === currentWorkspace) || workspacesList[0] || {
+      id: "none",
+      name: "Belum Ada Workspace",
+      universeId: "-",
+    };
 
   return (
     <>
@@ -122,7 +145,7 @@ export default function DashboardSidebar({
 
             {workspaceMenuOpen && (
               <div className="absolute top-full left-0 right-0 z-20 mt-1.5 rounded-xl border border-border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95">
-                {workspaces.map((ws) => (
+                {workspacesList.map((ws) => (
                   <button
                     key={ws.id}
                     type="button"
