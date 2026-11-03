@@ -38,10 +38,24 @@ export default function FakeDonationPage() {
     setIsFiring(true);
     setPreviewActive(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    try {
+      await fetch("/api/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider,
+          donator,
+          robloxUsername,
+          amount,
+          cashReward: amount,
+          message,
+          universeId: currentWorkspace,
+        }),
+      });
+    } catch {}
 
     setIsFiring(false);
-    setToastMessage(`Fake Donation Rp ${amount.toLocaleString("id-ID")} berhasil ditembakkan ke game!`);
+    setToastMessage(`Fake Donation Rp ${amount.toLocaleString("id-ID")} berhasil dimasukkan ke antrean game!`);
 
     setTimeout(() => {
       setToastMessage(null);
