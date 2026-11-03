@@ -3,21 +3,159 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.75rem;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #4338ca;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #6366f1;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --card: #111115;
+  --card-foreground: #f4f4f5;
+  --popover: #111115;
+  --popover-foreground: #f4f4f5;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1a22;
+  --secondary-foreground: #e4e4e7;
+  --muted: #18181b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e1e2d;
+  --accent-foreground: #c7d2fe;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #27272a;
+  --input: #3f3f46;
+  --ring: #6366f1;
+  --sidebar: #0b0b0e;
+  --sidebar-foreground: #f4f4f5;
+  --sidebar-border: #232328;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Modern Card Style */
+.modern-card,
+.neo-card {
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-card:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
+
+/* Modern Button Style */
+.modern-btn,
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.modern-btn:hover,
+.neo-btn:hover {
+  filter: brightness(1.03);
+}
+
+.modern-btn:active:not(:disabled),
+.neo-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.modern-btn:disabled,
+.neo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modern Input Style */
+.modern-input,
+.neo-input {
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--foreground);
+  border-radius: calc(var(--radius) - 2px);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modern-input:focus,
+.neo-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Glassmorphism backdrop */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.dark .glass-panel {
+  background: rgba(18, 18, 21, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
 }
 
 @layer utilities {
